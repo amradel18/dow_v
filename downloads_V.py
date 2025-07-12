@@ -1,79 +1,35 @@
 import streamlit as st
-import yt_dlp
-import os
-import glob
-import time
-from datetime import datetime
+from urllib.parse import urlparse
 
-st.set_page_config(page_title="Video Downloader", page_icon="🎥")
+# إعداد الصفحة
+st.set_page_config(page_title="🎥 Video Downloader", page_icon="🎥")
 
-st.title("🎥 Video Downloader")
+# عنوان التطبيق
+st.title("🎥 Direct Video Downloader")
 
+# حقل إدخال رابط الفيديو
 video_url = st.text_input("🎞️ Enter video URL:")
-referer = "https://google.com/"
-user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
 
-log_placeholder = st.empty()
-
-def progress_hook(d):
-    if d['status'] == 'downloading':
-        percent = d.get('_percent_str', '').strip()
-        speed = d.get('_speed_str', '0')
-        eta = d.get('_eta_str', '00:00')
-        log_placeholder.text(f"[download] {percent} at {speed} ETA {eta}")
-    elif d['status'] == 'finished':
-        log_placeholder.text("✅ Download completed successfully!")
-
-def download_video(url, referer_header, user_agent_header):
-    try:
-        os.makedirs("downloads", exist_ok=True)
-        output_template = "downloads/video_download.%(ext)s"
-
-        ydl_opts = {
-            'outtmpl': output_template,
-            'quiet': True,
-            'progress_hooks': [progress_hook],
-            'http_headers': {
-                'Referer': referer_header,
-                'User-Agent': user_agent_header
-            },
-            'retries': 5,
-            'ignoreerrors': True,
-            'nooverwrites': True,
-            'continuedl': True,
-            'format': 'best'
-        }
-
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            st.info("⏳ Download started...")
-            ydl.download([url])
-
-        # get downloaded files
-        downloaded_files = glob.glob("downloads/video_download.*")
-        if downloaded_files:
-            st.info(f"✅ Files found: {downloaded_files}")
-
-            for video_file in downloaded_files:
-                with open(video_file, "rb") as f:
-                    st.download_button(
-                        label=f"🎬 Download {os.path.basename(video_file)}",
-                        data=f,
-                        file_name=os.path.basename(video_file),
-                        mime="video/mp4"
-                    )
-                os.remove(video_file)
-        else:
-            st.error("❌ No video file found after download.")
-
-    except yt_dlp.utils.DownloadError as e:
-        st.error(f"❌ Download error: {str(e)}")
-    except Exception as e:
-        st.error(f"❌ Unexpected error: {str(e)}")
-
-if st.button("⬇️ Start Download"):
+# زر تنفيذ
+if st.button("Generate Download Link"):
     if not video_url:
         st.warning("⚠️ Please enter a video URL.")
     else:
-        download_video(video_url, referer, user_agent)
+        # التحقق من امتداد الرابط
+        parsed_url = urlparse(video_url)
+        if parsed_url.path.endswith(".mp4"):
+            # لو الرابط مباشر (mp4)
+            st.success("✅ This is a direct video link.")
+            st.markdown(f"""
+                <a href="{video_url}" download target="_blank">
+                📥 <button style='padding:10px 20px; font-size:16px; background-color:#4CAF50; color:white; border:none; border-radius:5px;'>Download Video</button>
+                </a>
+            """, unsafe_allow_html=True)
+        else:
+            # لو الرابط مش مباشر (زي YouTube)
+            st.error("⚠️ This link is not a direct video link (e.g. YouTube or protected stream).")
+            st.write("💡 If it's a YouTube video, you can download it on your computer using this command:")
+            st.code(f'yt-dlp "{video_url}"', language='bash')
 
-st.caption(f"© {datetime.now().year} | Developed by YourName | Powered by yt-dlp")
+# التوقيع
+st.caption("© 2025 | Developed by YourName | Powered by Streamlit")
