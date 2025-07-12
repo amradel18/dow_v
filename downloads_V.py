@@ -39,11 +39,11 @@ def progress_hook(d):
 
 def download_video(url, referer_header, user_agent_header):
     try:
-        output_path = 'downloads/%(title)s.%(ext)s'
         os.makedirs("downloads", exist_ok=True)
+        output_filename = "downloads/video_download.mp4"
 
         ydl_opts = {
-            'outtmpl': output_path,
+            'outtmpl': output_filename,
             'quiet': True,
             'progress_hooks': [progress_hook],
             'http_headers': {
@@ -59,20 +59,19 @@ def download_video(url, referer_header, user_agent_header):
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             st.info("⏳ Download started...")
-            info = ydl.extract_info(url, download=True)
-            filename = ydl.prepare_filename(info)
+            ydl.download([url])
 
         st.success("✅ Download completed successfully!")
 
-        with open(filename, "rb") as f:
+        with open(output_filename, "rb") as f:
             st.download_button(
                 label="🎬 Click to Download Video",
                 data=f,
-                file_name=os.path.basename(filename),
+                file_name="video_download.mp4",
                 mime="video/mp4"
             )
 
-        os.remove(filename)
+        os.remove(output_filename)
 
     except yt_dlp.utils.DownloadError as e:
         st.error(f"❌ Download error: {str(e)}")
