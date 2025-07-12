@@ -41,25 +41,27 @@ def download_video(url, referer_header, user_agent_header):
             'ignoreerrors': True,
             'nooverwrites': True,
             'continuedl': True,
-            'format': 'best[ext=mp4]/best'
+            'format': 'best'
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             st.info("⏳ Download started...")
             ydl.download([url])
 
-        # get downloaded file
+        # get downloaded files
         downloaded_files = glob.glob("downloads/video_download.*")
         if downloaded_files:
-            video_file = downloaded_files[0]
-            with open(video_file, "rb") as f:
-                st.download_button(
-                    label="🎬 Click to Download Video",
-                    data=f,
-                    file_name=os.path.basename(video_file),
-                    mime="video/mp4"
-                )
-            os.remove(video_file)
+            st.info(f"✅ Files found: {downloaded_files}")
+
+            for video_file in downloaded_files:
+                with open(video_file, "rb") as f:
+                    st.download_button(
+                        label=f"🎬 Download {os.path.basename(video_file)}",
+                        data=f,
+                        file_name=os.path.basename(video_file),
+                        mime="video/mp4"
+                    )
+                os.remove(video_file)
         else:
             st.error("❌ No video file found after download.")
 
